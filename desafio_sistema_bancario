@@ -1,0 +1,150 @@
+import time
+import textwrap
+
+def menu(): 
+    menu = """\n
+    \033[1;30;45mBem-Vindo ao Banco Desafio Dio\033[m
+    -------------MENU-------------
+    [d]\tDepositar
+    [s]\tSacar
+    [v]\tExtrato
+    [n]\tCriar Usuário
+    [c]\tCriar Conta
+    [l]\tListar Contas
+    [q]\tSair   
+    ------------------------------
+    >"""
+    return input(textwrap.dedent(menu))
+
+def depositar(saldo, valor_depositado, extrato, /):
+    if valor_depositado > 0:
+        print(f'\n\033[0;30;42mValor depositado: R${valor_depositado:.2f}\033[m')
+        saldo += valor_depositado
+        extrato += f"Depósito:\tR${valor_depositado:.2f}\n"
+    else:
+        print("Valor inválido")
+    print(f"Saldo atual: R${saldo:.2f}") 
+
+    return saldo, extrato
+
+def sacar(*, saldo, valor_sacado, extrato, LIMITE_SAQUES):
+        if LIMITE_SAQUES < 1:
+            print("\n\033[0;30;41mJá foram realizados os 3 saques permitidos\033[m")
+        else:
+            print(f"\nSaques permitidos: {LIMITE_SAQUES}")
+            # valor_sacado = float(input("Digite o valor que deseja sacar: "))
+            if valor_sacado > saldo:
+                print(f"\033[0;30;41mNão será possível o saque. Saldo insuficiente. Saldo: {saldo}\033[m")
+
+            else:
+                if valor_sacado > 500:
+                    print("\033[0;30;41mVocê não pode sacar mais de R$500.00\033[m")
+                else:
+                    saldo -= valor_sacado
+                    print(f"\033[0;30;43mValor sacado: R${valor_sacado:.2f}\033[m")
+                    extrato += f"Saque:\t\tR${valor_sacado:.2f}\n"
+                    LIMITE_SAQUES-=1
+                    print(f"Saldo atual: R${saldo:.2f}")
+        
+        return saldo, extrato, valor_sacado, LIMITE_SAQUES
+
+def visualizar_extrato(saldo, /, *, extrato):
+    if extrato is "":
+        print("Não foram realizadas transações até o momento.")
+    else:
+        print(extrato)
+        print(f"Seu saldo atual é: R${saldo:.2f}")
+    
+    return saldo, extrato
+
+def criar_usuario(lista_usuarios):
+    cpf = input("Digite o CPF: ")
+    usuario = filtrar_usarios(cpf, lista_usuarios)
+
+    if usuario:
+        print("\033[1;30;41mCPF de usuário já existente! \033[m")
+        return
+
+    nome = input("Digite o nome: ")
+    data_nascimento = input("Digite o nascimento (Formato - dd/mm/aaaa): ")
+    endereco = input("Digite o endereço (Formato - logradouro,nº,bairro,cidade/uf): ")
+
+    lista_usuarios.append({"nome": nome, "data_nascimento": data_nascimento, "cpf": cpf, "endereço": endereco})
+    print("\n\033[1;30;42mUsuário cadastrado com sucesso! \033[m")
+
+def filtrar_usarios(cpf, lista_usuarios):
+    usuarios_filtrados = [usuario for usuario in lista_usuarios if usuario["cpf"] == cpf]
+    return usuarios_filtrados[0] if usuarios_filtrados else None
+
+def criar_conta(agencia, numero_conta, lista_usuarios):
+    cpf = input("Digite o CPF: ")
+    usuario = filtrar_usarios(cpf, lista_usuarios)
+    
+    if usuario:
+        print("\n\033[1;30;42mConta criada com sucesso! \033[m")
+        return {"agencia": agencia, "numero_conta": numero_conta, "usuario": usuario}
+    
+    print("\n\033[1;30;41mUsuário não identificado! \033[m")
+ 
+def listar_contas(lista_contas):
+    print(f'+{'-' * 58}+')
+    for conta in lista_contas:
+        print(f"Agência:\t{conta['agencia']}\n")
+        print(f"C/C:\t\t{conta['numero_conta']}\n")
+        print(f"Titular:\t{conta['usuario']['nome']}")
+        print(f'+{'-' * 58}+')
+
+def main():
+    LIMITE_SAQUES = 3
+    AGENCIA = "0001"
+    saldo = 0
+    extrato = ""
+    lista_usuarios = []
+    lista_contas = []
+    numero_conta = 1
+
+    while True:
+
+        opcao = menu()
+        
+        if opcao == 'd':
+            valor_depositado = float(input("Digite o valor a ser depositado: "))
+            saldo, extrato = depositar(saldo, valor_depositado, extrato)  
+            print(f'{'-' * 30}')     
+        
+        elif opcao == 's':
+            valor_sacado = float(input("Digite o valor que deseja sacar: "))
+            saldo, extrato, valor_sacado, LIMITE_SAQUES = sacar(saldo=saldo, valor_sacado=valor_sacado, extrato=extrato, LIMITE_SAQUES=LIMITE_SAQUES)
+            print(f'{'-' * 30}')
+
+        elif opcao == 'v':
+            msg = "EXTRATO"
+            print(msg.center(30,"-"))
+            saldo, extrato = visualizar_extrato(saldo,extrato=extrato)
+            print(f'{'-' * 30}')
+        
+        elif opcao == 'n':
+            criar_usuario(lista_usuarios)
+            print(f'{'-' * 30}')
+
+        elif opcao == 'c':
+            conta = criar_conta(AGENCIA, numero_conta, lista_usuarios)
+            if conta:
+                lista_contas.append(conta)
+                numero_conta+=1
+            print(f'{'-' * 30}')
+
+        elif opcao == 'l':
+            listar_contas(lista_contas)
+
+        elif opcao == 'q':
+            txt = "Banco Desafio Dio"
+            print(txt.center(30,'-'))
+            print('\n')
+            time.sleep(2)
+            break
+
+        else:
+            print("Opção inválida. Tente novamente.")
+
+main()
